@@ -1,109 +1,234 @@
- <!doctype html>
+
+<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>♻️ 주간 분리수거 당번 안내</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#111827;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
-.card{background:#fff;width:100%;max-width:480px;border-radius:20px;padding:28px 24px;box-shadow:0 4px 20px rgba(0,0,0,.08);text-align:center}
-h1{font-size:24px;margin:0 0 8px;color:#111827}
+body{
+  margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:#f3f4f6;color:#111827;display:flex;justify-content:center;
+  align-items:center;min-height:100vh;padding:20px
+}
+.card{
+  background:#fff;width:100%;max-width:480px;border-radius:20px;
+  padding:28px 24px;box-shadow:0 4px 20px rgba(0,0,0,.08);text-align:center
+}
+h1{font-size:24px;margin:0 0 8px}
 .sub{font-size:14px;color:#6b7280;margin-bottom:24px}
-.today-box{background:#eff6ff;border:2px solid #3b82f6;border-radius:16px;padding:20px;margin-bottom:20px}
+.today-box{
+  background:#eff6ff;border:2px solid #3b82f6;border-radius:16px;
+  padding:20px;margin-bottom:20px
+}
 .day-title{font-size:16px;font-weight:700;color:#1d4ed8;margin-bottom:6px}
-.team-name{font-size:28px;font-weight:900;color:#1e3a8a}
-.schedule-list{text-align:left;background:#f9fafb;border-radius:14px;padding:16px;margin-bottom:20px;border:1px solid #e5e7eb}
-.schedule-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed #e5e7eb;font-size:15px}
+.team-name{font-size:28px;font-weight:900;color:#1e3a8a;overflow-wrap:anywhere}
+.schedule-list{
+  text-align:left;background:#f9fafb;border-radius:14px;padding:16px;
+  margin-bottom:20px;border:1px solid #e5e7eb
+}
+.schedule-item{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:10px 0;border-bottom:1px dashed #e5e7eb;font-size:15px
+}
 .schedule-item:last-child{border-bottom:none}
-.bold{font-weight:700;color:#111827}
-button{width:100%;background:#3b82f6;color:#fff;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
+.bold{font-weight:700;color:#111827;text-align:right}
+button{
+  width:100%;background:#3b82f6;color:#fff;border:0;border-radius:12px;
+  padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px
+}
 button:hover{background:#2563eb}
+.voice-button{background:#059669}
+.voice-button:hover{background:#047857}
+.status{margin-top:12px;font-size:13px;color:#6b7280;line-height:1.5}
 </style>
 </head>
-<body>
 
+<body>
 <div class="card">
-<h1>♻️ 분리수거 당번 안내</h1>
-<div class="sub">월요일 & 목요일 (한 조가 이번 주 전담)</div>
+  <h1>♻️ 분리수거 당번 안내</h1>
+  <div class="sub">월요일 & 목요일 (한 조가 이번 주 전담)</div>
 
   <div class="today-box">
-<div class="day-title" id="currentDutyTitle">이번 주 당번 (월/목)</div>
-<div class="team-name" id="currentTeam">-</div>
-</div>
+    <div class="day-title" id="currentDutyTitle">이번 주 당번 (월/목)</div>
+    <div class="team-name" id="currentTeam">-</div>
+  </div>
 
   <div class="schedule-list">
-<div class="schedule-item">
-<span>📅 다음 주 당번 (월/목)</span>
-<span class="bold" id="nextTeam">-</span>
-</div>
-<div class="schedule-item">
-<span>📅 다다음 주 당번 (월/목)</span>
-<span class="bold" id="afterNextTeam">-</span>
-</div>
-</div>
+    <div class="schedule-item">
+      <span>📅 다음 주 당번 (월/목)</span>
+      <span class="bold" id="nextTeam">-</span>
+    </div>
+    <div class="schedule-item">
+      <span>📅 다다음 주 당번 (월/목)</span>
+      <span class="bold" id="afterNextTeam">-</span>
+    </div>
+  </div>
 
-  <button onclick="nextShift()">🔄 순번 강제 변경 (다음 조로)</button>
+  <button class="voice-button" onclick="speakDuty(false)">
+    🔊 이번 주 당번 음성 호명
+  </button>
+
+  <button onclick="nextShift()">
+    🔄 순번 강제 변경 (다음 조로)
+  </button>
+
+  <div class="status" id="voiceStatus">
+    월요일·목요일 오전 10시 자동 호명을 설정했습니다.
+  </div>
 </div>
 
 <script>
-// 4개 조 로테이션 순서 (1주 단위)
+// 1. 4개 조 로테이션 순서
 const teams = [
-"윤영주, 정우리", // 0번
-"이도혜",         // 1번
-"김현수",         // 2번
-"김진석, 김성욱"  // 3번
+  "윤영주, 정우리",
+  "이도혜",
+  "김현수",
+  "김진석, 김성욱"
 ];
 
-  let shiftOffset = parseInt(localStorage.getItem("recycle_offset") || "0");
+let shiftOffset = parseInt(
+  localStorage.getItem("recycle_offset") || "0", 10
+);
 
-  function getDutyInfo() {
-const now = new Date();
+// 2. 당번 계산
+function getDutyInfo() {
+  const now = new Date();
+  const baseMon = new Date(2026, 5, 22);
 
-    // 기준점: 6월 22일 월요일 (서인태, 윤영주 조 시작일)
-const baseMon = new Date(2026, 5, 22);
+  const currentDay = now.getDay();
+  const diffToMon = currentDay === 0 ? -6 : 1 - currentDay;
 
-    const currentDay = now.getDay();
-const diffToMon = (currentDay === 0 ? -6 : 1 - currentDay);
+  const thisMon = new Date(now);
+  thisMon.setDate(now.getDate() + diffToMon);
+  thisMon.setHours(0, 0, 0, 0);
 
-    const thisMon = new Date(now);
-thisMon.setDate(now.getDate() + diffToMon);
-thisMon.setHours(0,0,0,0);
+  const diffWeeks = Math.round(
+    (thisMon - baseMon) / (1000 * 60 * 60 * 24 * 7)
+  );
 
-    // 몇 주 차이인지 계산
-const diffWeeks = Math.round((thisMon - baseMon) / (1000 * 60 * 60 * 24 * 7));
+  let thisWeekIndex = (diffWeeks + shiftOffset) % 4;
+  if (thisWeekIndex < 0) thisWeekIndex += 4;
 
-    // 이번 주, 다음 주, 다다음 주 조 계산
-let thisWeekIndex = (diffWeeks + shiftOffset) % 4;
-if (thisWeekIndex < 0) thisWeekIndex += 4;
+  document.getElementById("currentTeam").textContent =
+    teams[thisWeekIndex];
 
-    let nextWeekIndex = (thisWeekIndex + 1) % 4;
-let afterNextWeekIndex = (thisWeekIndex + 2) % 4;
+  document.getElementById("nextTeam").textContent =
+    teams[(thisWeekIndex + 1) % 4];
 
-    // 화면 업데이트
-document.getElementById("currentTeam").textContent = teams[thisWeekIndex];
-document.getElementById("nextTeam").textContent = teams[nextWeekIndex];
-document.getElementById("afterNextTeam").textContent = teams[afterNextWeekIndex];
+  document.getElementById("afterNextTeam").textContent =
+    teams[(thisWeekIndex + 2) % 4];
 
-    if (currentDay === 1) {
-document.getElementById("currentDutyTitle").textContent = "오늘(월요일) 분리수거 당번";
-} else if (currentDay === 4) {
-document.getElementById("currentDutyTitle").textContent = "오늘(목요일) 분리수거 당번";
-} else {
-document.getElementById("currentDutyTitle").textContent = "이번 주 담당 조 (월/목 전담)";
+  if (currentDay === 1) {
+    document.getElementById("currentDutyTitle").textContent =
+      "오늘(월요일) 분리수거 당번";
+  } else if (currentDay === 4) {
+    document.getElementById("currentDutyTitle").textContent =
+      "오늘(목요일) 분리수거 당번";
+  } else {
+    document.getElementById("currentDutyTitle").textContent =
+      "이번 주 담당 조 (월/목 전담)";
+  }
 }
+
+// 3. 오늘 날짜 키
+function getTodayKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-  function nextShift() {
-if (confirm("순번을 다음 조로 1주 밀어내겠습니까?")) {
-shiftOffset = (shiftOffset + 1) % 4;
-localStorage.setItem("recycle_offset", shiftOffset);
+// 4. 음성 호명
+function speakDuty(isAuto = false) {
+  if (!("speechSynthesis" in window)) {
+    document.getElementById("voiceStatus").textContent =
+      "이 브라우저는 음성 합성을 지원하지 않습니다.";
+    return;
+  }
+
+  const todayKey = getTodayKey();
+
+  if (isAuto) {
+    const day = new Date().getDay();
+
+    // 월요일 또는 목요일만 자동 호명
+    if (day !== 1 && day !== 4) return;
+
+    // 오늘 이미 자동 호명했다면 중복 실행하지 않음
+    if (localStorage.getItem("recycle_last_spoken_day") === todayKey) {
+      return;
+    }
+  }
+
+  const team = document.getElementById("currentTeam").textContent;
+  if (!team || team === "-") return;
+
+  const message =
+    `안내 말씀드립니다. 이번 주 분리수거 당번은 ${team}입니다. ` +
+    "월요일과 목요일 분리수거를 담당해 주시기 바랍니다.";
+
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.lang = "ko-KR";
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  utterance.onstart = function() {
+    document.getElementById("voiceStatus").textContent =
+      "🔊 당번 안내 방송 중입니다.";
+
+    if (isAuto) {
+      localStorage.setItem("recycle_last_spoken_day", todayKey);
+    }
+  };
+
+  utterance.onend = function() {
+    document.getElementById("voiceStatus").textContent =
+      "당번 안내가 완료되었습니다.";
+  };
+
+  utterance.onerror = function() {
+    document.getElementById("voiceStatus").textContent =
+      "음성 재생에 실패했습니다. 버튼을 눌러 다시 시도해 주세요.";
+  };
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+// 5. 월요일·목요일 자동 호명
+function autoSpeakOnSchedule() {
+  const day = new Date().getDay();
+
+  if (day !== 1 && day !== 4) return;
+
+  const todayKey = getTodayKey();
+
+  if (localStorage.getItem("recycle_last_spoken_day") === todayKey) {
+    return;
+  }
+
+  setTimeout(function() {
+    speakDuty(true);
+  }, 2000);
+}
+
+// 6. 순번 강제 변경
+function nextShift() {
+  if (confirm("순번을 다음 조로 1주 밀어내겠습니까?")) {
+    shiftOffset = (shiftOffset + 1) % 4;
+    localStorage.setItem("recycle_offset", shiftOffset);
+    getDutyInfo();
+  }
+}
+
+// 7. 초기 실행
 getDutyInfo();
-}
-}
-
-  getDutyInfo();
+autoSpeakOnSchedule();
 </script>
-
 </body>
 </html>
