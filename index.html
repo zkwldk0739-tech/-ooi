@@ -1,4 +1,4 @@
-```html
+
 <!doctype html>
 <html lang="ko">
 <head>
@@ -7,49 +7,112 @@
 <title>♻️ 주간 분리수거 당번 안내</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:#f3f4f6;color:#111827;display:flex;justify-content:center;
-  align-items:center;min-height:100vh;padding:20px
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f3f4f6;
+  color: #111827;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
 }
-.card{
-  background:#fff;width:100%;max-width:480px;border-radius:20px;
-  padding:28px 24px;box-shadow:0 4px 20px rgba(0,0,0,.08);text-align:center
+
+.card {
+  background: #fff;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  text-align: center;
 }
-h1{font-size:24px;margin:0 0 8px}
-.sub{font-size:14px;color:#6b7280;margin-bottom:24px}
-.today-box{
-  background:#eff6ff;border:2px solid #3b82f6;border-radius:16px;
-  padding:20px;margin-bottom:20px
+
+h1 { font-size: 24px; margin: 0 0 8px; }
+.sub { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+
+.today-box {
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
-.day-title{font-size:16px;font-weight:700;color:#1d4ed8;margin-bottom:6px}
-.team-name{font-size:28px;font-weight:900;color:#1e3a8a;overflow-wrap:anywhere}
-.schedule-list{
-  text-align:left;background:#f9fafb;border-radius:14px;padding:16px;
-  margin-bottom:20px;border:1px solid #e5e7eb
+
+.day-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1d4ed8;
+  margin-bottom: 6px;
 }
-.schedule-item{
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
-  padding:10px 0;border-bottom:1px dashed #e5e7eb;font-size:15px
+
+.team-name {
+  font-size: 28px;
+  font-weight: 900;
+  color: #1e3a8a;
+  overflow-wrap: anywhere;
 }
-.schedule-item:last-child{border-bottom:none}
-.bold{font-weight:700;color:#111827;text-align:right}
-button{
-  width:100%;background:#3b82f6;color:#fff;border:0;border-radius:12px;
-  padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px
+
+.schedule-list {
+  text-align: left;
+  background: #f9fafb;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
 }
-button:hover{background:#2563eb}
-.voice-button{background:#059669}
-.voice-button:hover{background:#047857}
-.status{margin-top:12px;font-size:13px;color:#6b7280;line-height:1.5}
+
+.schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e5e7eb;
+  font-size: 15px;
+}
+
+.schedule-item:last-child { border-bottom: none; }
+
+.bold {
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+button {
+  width: 100%;
+  background: #3b82f6;
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+button:hover { background: #2563eb; }
+.voice-button { background: #059669; }
+.voice-button:hover { background: #047857; }
+
+.status {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
 </style>
 </head>
 
 <body>
 <div class="card">
   <h1>♻️ 분리수거 당번 안내</h1>
-  <div class="sub">월요일 & 목요일 (한 조가 이번 주 전담)</div>
+  <div class="sub">월요일 &amp; 목요일 (한 조가 이번 주 전담)</div>
 
   <div class="today-box">
     <div class="day-title" id="currentDutyTitle">이번 주 당번 (월/목)</div>
@@ -81,6 +144,9 @@ button:hover{background:#2563eb}
 </div>
 
 <script>
+"use strict";
+
+// 1. 당번 조 순서
 const teams = [
   "윤영주, 정우리",
   "이도혜",
@@ -92,9 +158,19 @@ let shiftOffset = parseInt(
   localStorage.getItem("recycle_offset") || "0", 10
 );
 
+if (!Number.isFinite(shiftOffset)) shiftOffset = 0;
+
+// URL 끝에 ?testVoice=1 을 붙이면 요일과 관계없이 자동 음성을 테스트
+const testMode =
+  new URLSearchParams(window.location.search).get("testVoice") === "1";
+
+let autoStarted = false;
+
+// 2. 당번 계산
 function getDutyInfo() {
   const now = new Date();
   const baseMon = new Date(2026, 5, 22);
+
   const currentDay = now.getDay();
   const diffToMon = currentDay === 0 ? -6 : 1 - currentDay;
 
@@ -130,6 +206,7 @@ function getDutyInfo() {
   }
 }
 
+// 3. 오늘 날짜 키
 function getTodayKey() {
   const now = new Date();
   const y = now.getFullYear();
@@ -138,93 +215,153 @@ function getTodayKey() {
   return `${y}-${m}-${d}`;
 }
 
+// 4. 음성 안내
 function speakDuty(isAuto = false) {
+  const status = document.getElementById("voiceStatus");
+
   if (!("speechSynthesis" in window)) {
-    document.getElementById("voiceStatus").textContent =
-      "이 브라우저는 음성 합성을 지원하지 않습니다.";
+    status.textContent = "이 브라우저는 음성 합성을 지원하지 않습니다.";
     return;
   }
 
   const todayKey = getTodayKey();
 
-  if (isAuto &&
-      localStorage.getItem("recycle_last_spoken_day") === todayKey) {
-    document.getElementById("voiceStatus").textContent =
-      "오늘 자동 호명은 이미 실행되었습니다.";
-    return;
+  if (isAuto && !testMode) {
+    const day = new Date().getDay();
+
+    if (day !== 1 && day !== 4) return;
+
+    if (
+      localStorage.getItem("recycle_last_spoken_day") === todayKey
+    ) {
+      status.textContent = "오늘 자동 안내는 이미 실행되었습니다.";
+      return;
+    }
   }
 
   const team = document.getElementById("currentTeam").textContent;
-  if (!team || team === "-") return;
+
+  if (!team || team === "-") {
+    status.textContent = "당번 정보를 불러오지 못했습니다.";
+    return;
+  }
 
   const message =
     `안내 말씀드립니다. 이번 주 분리수거 당번은 ${team}입니다. ` +
     "쓰레기통을 비워주세요.";
 
+  const synthesis = window.speechSynthesis;
   const utterance = new SpeechSynthesisUtterance(message);
+
   utterance.lang = "ko-KR";
   utterance.rate = 0.9;
   utterance.pitch = 1;
   utterance.volume = 1;
 
-  utterance.onstart = function() {
-    document.getElementById("voiceStatus").textContent =
-      "🔊 당번 안내 방송 중입니다.";
+  // 한국어 음성이 제공되는 경우 우선 사용
+  const voices = synthesis.getVoices();
+  const koreanVoice = voices.find(
+    voice => voice.lang &&
+      voice.lang.toLowerCase().startsWith("ko")
+  );
 
-    if (isAuto) {
+  if (koreanVoice) utterance.voice = koreanVoice;
+
+  let started = false;
+
+  utterance.onstart = function() {
+    started = true;
+    status.textContent = "🔊 당번 안내 방송 중입니다.";
+
+    // 실제 음성 재생이 시작된 경우에만 완료 기록
+    if (isAuto && !testMode) {
       localStorage.setItem("recycle_last_spoken_day", todayKey);
     }
   };
 
   utterance.onend = function() {
-    document.getElementById("voiceStatus").textContent =
-      "당번 안내가 완료되었습니다.";
+    status.textContent = "당번 안내가 완료되었습니다.";
   };
 
   utterance.onerror = function(event) {
-    document.getElementById("voiceStatus").textContent =
-      "자동 음성 재생 실패: " + event.error;
+    status.textContent =
+      "음성 재생 오류: " + (event.error || "재생 실패") +
+      ". 웨일 음성 설정과 자동 실행 옵션을 확인해 주세요.";
   };
 
-  window.speechSynthesis.cancel();
+  // 이전 음성을 정리한 다음 새 안내를 시작
+  synthesis.cancel();
 
-  // 음성 목록을 불러온 뒤 재생 시도
-  const voices = window.speechSynthesis.getVoices();
-  const koreanVoice = voices.find(v => v.lang.toLowerCase().startsWith("ko"));
+  status.textContent = isAuto
+    ? "자동 음성 재생을 시도하고 있습니다."
+    : "음성 재생을 시작합니다.";
 
-  if (koreanVoice) {
-    utterance.voice = koreanVoice;
-  }
+  // cancel() 직후 바로 speak() 하면 일부 환경에서 누락될 수 있어 지연
+  setTimeout(function() {
+    try {
+      synthesis.speak(utterance);
 
-  window.speechSynthesis.speak(utterance);
+      // 브라우저가 요청을 받았지만 시작하지 못한 경우 표시
+      setTimeout(function() {
+        if (!started && !synthesis.speaking) {
+          status.textContent =
+            "음성 시작이 확인되지 않았습니다. 자동 실행 제한을 확인해 주세요.";
+        }
+      }, 5000);
+    } catch (error) {
+      status.textContent = "음성 실행 오류: " + error.message;
+    }
+  }, 300);
 }
 
+// 5. 월요일·목요일 자동 호명
 function autoSpeakOnSchedule() {
+  const day = new Date().getDay();
+
+  if (!testMode && day !== 1 && day !== 4) {
+    return;
+  }
+
+  const todayKey = getTodayKey();
+
+  if (
+    !testMode &&
+    localStorage.getItem("recycle_last_spoken_day") === todayKey
+  ) {
+    document.getElementById("voiceStatus").textContent =
+      "오늘 자동 안내는 이미 실행되었습니다.";
+    return;
+  }
+
+  if (autoStarted) return;
+  autoStarted = true;
+
   document.getElementById("voiceStatus").textContent =
     "자동 음성 실행을 준비하고 있습니다.";
 
-  // 화면과 당번 정보가 준비된 뒤 자동 호명 시도
+  // 웨일이 페이지를 연 직후 음성 목록이 준비될 시간을 줌
   setTimeout(function() {
-    if (window.speechSynthesis.speaking ||
-        window.speechSynthesis.pending) {
-      window.speechSynthesis.cancel();
-    }
+    const synthesis = window.speechSynthesis;
+
+    // 음성 목록 초기화를 요청
+    synthesis.getVoices();
 
     speakDuty(true);
-  }, 3000);
+  }, 4000);
 }
 
+// 6. 순번 강제 변경
 function nextShift() {
   if (confirm("순번을 다음 조로 1주 밀어내겠습니까?")) {
     shiftOffset = (shiftOffset + 1) % 4;
-    localStorage.setItem("recycle_offset", shiftOffset);
+    localStorage.setItem("recycle_offset", String(shiftOffset));
     getDutyInfo();
   }
 }
 
+// 7. 초기 실행
 getDutyInfo();
 autoSpeakOnSchedule();
 </script>
 </body>
 </html>
-```
