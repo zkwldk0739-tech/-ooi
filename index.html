@@ -1,4 +1,4 @@
-
+```html
 <!doctype html>
 <html lang="ko">
 <head>
@@ -81,7 +81,6 @@ button:hover{background:#2563eb}
 </div>
 
 <script>
-// 1. 4개 조 로테이션 순서
 const teams = [
   "윤영주, 정우리",
   "이도혜",
@@ -93,11 +92,9 @@ let shiftOffset = parseInt(
   localStorage.getItem("recycle_offset") || "0", 10
 );
 
-// 2. 당번 계산
 function getDutyInfo() {
   const now = new Date();
   const baseMon = new Date(2026, 5, 22);
-
   const currentDay = now.getDay();
   const diffToMon = currentDay === 0 ? -6 : 1 - currentDay;
 
@@ -133,7 +130,6 @@ function getDutyInfo() {
   }
 }
 
-// 3. 오늘 날짜 키
 function getTodayKey() {
   const now = new Date();
   const y = now.getFullYear();
@@ -142,7 +138,6 @@ function getTodayKey() {
   return `${y}-${m}-${d}`;
 }
 
-// 4. 음성 호명
 function speakDuty(isAuto = false) {
   if (!("speechSynthesis" in window)) {
     document.getElementById("voiceStatus").textContent =
@@ -152,16 +147,11 @@ function speakDuty(isAuto = false) {
 
   const todayKey = getTodayKey();
 
-  if (isAuto) {
-    const day = new Date().getDay();
-
-    // 월요일 또는 목요일만 자동 호명
-    if (day !== 1 && day !== 4) return;
-
-    // 오늘 이미 자동 호명했다면 중복 실행하지 않음
-    if (localStorage.getItem("recycle_last_spoken_day") === todayKey) {
-      return;
-    }
+  if (isAuto &&
+      localStorage.getItem("recycle_last_spoken_day") === todayKey) {
+    document.getElementById("voiceStatus").textContent =
+      "오늘 자동 호명은 이미 실행되었습니다.";
+    return;
   }
 
   const team = document.getElementById("currentTeam").textContent;
@@ -191,33 +181,39 @@ function speakDuty(isAuto = false) {
       "당번 안내가 완료되었습니다.";
   };
 
-  utterance.onerror = function() {
+  utterance.onerror = function(event) {
     document.getElementById("voiceStatus").textContent =
-      "음성 재생에 실패했습니다. 버튼을 눌러 다시 시도해 주세요.";
+      "자동 음성 재생 실패: " + event.error;
   };
 
   window.speechSynthesis.cancel();
+
+  // 음성 목록을 불러온 뒤 재생 시도
+  const voices = window.speechSynthesis.getVoices();
+  const koreanVoice = voices.find(v => v.lang.toLowerCase().startsWith("ko"));
+
+  if (koreanVoice) {
+    utterance.voice = koreanVoice;
+  }
+
   window.speechSynthesis.speak(utterance);
 }
 
-// 5. 월요일·목요일 자동 호명
 function autoSpeakOnSchedule() {
-  const day = new Date().getDay();
+  document.getElementById("voiceStatus").textContent =
+    "자동 음성 실행을 준비하고 있습니다.";
 
-  if (day !== 1 && day !== 4) return;
-
-  const todayKey = getTodayKey();
-
-  if (localStorage.getItem("recycle_last_spoken_day") === todayKey) {
-    return;
-  }
-
+  // 화면과 당번 정보가 준비된 뒤 자동 호명 시도
   setTimeout(function() {
+    if (window.speechSynthesis.speaking ||
+        window.speechSynthesis.pending) {
+      window.speechSynthesis.cancel();
+    }
+
     speakDuty(true);
-  }, 2000);
+  }, 3000);
 }
 
-// 6. 순번 강제 변경
 function nextShift() {
   if (confirm("순번을 다음 조로 1주 밀어내겠습니까?")) {
     shiftOffset = (shiftOffset + 1) % 4;
@@ -226,9 +222,9 @@ function nextShift() {
   }
 }
 
-// 7. 초기 실행
 getDutyInfo();
 autoSpeakOnSchedule();
 </script>
 </body>
 </html>
+```
