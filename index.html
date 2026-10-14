@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -17,70 +17,90 @@ h1{font-size:24px;margin:0 0 8px;color:#111827}
 .schedule-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed #e5e7eb;font-size:15px}
 .schedule-item:last-child{border-bottom:none}
 .bold{font-weight:700;color:#111827}
+button{width:100%;background:#3b82f6;color:#fff;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
+button:hover{background:#2563eb}
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h1>♻️ 분리수거 당번 안내</h1>
-  <div class="sub">월요일 & 목요일 (한 조가 이번 주 전담)</div>
+<h1>♻️ 분리수거 당번 안내</h1>
+<div class="sub">월요일 & 목요일 (한 조가 이번 주 전담)</div>
 
   <div class="today-box">
-    <div class="day-title" id="currentDutyTitle">이번 주 당번 (월/목)</div>
-    <div class="team-name" id="currentTeam">-</div>
-  </div>
+<div class="day-title" id="currentDutyTitle">이번 주 당번 (월/목)</div>
+<div class="team-name" id="currentTeam">-</div>
+</div>
 
   <div class="schedule-list">
-    <div class="schedule-item">
-      <span>📅 다음 주 당번 (월/목)</span>
-      <span class="bold" id="nextTeam">-</span>
-    </div>
-    <div class="schedule-item">
-      <span>📅 다다음 주 당번 (월/목)</span>
-      <span class="bold" id="afterNextTeam">-</span>
-    </div>
-  </div>
+<div class="schedule-item">
+<span>📅 다음 주 당번 (월/목)</span>
+<span class="bold" id="nextTeam">-</span>
+</div>
+<div class="schedule-item">
+<span>📅 다다음 주 당번 (월/목)</span>
+<span class="bold" id="afterNextTeam">-</span>
+</div>
+</div>
+
+  <button onclick="nextShift()">🔄 순번 강제 변경 (다음 조로)</button>
 </div>
 
 <script>
-  const teams = [
-    "윤영주, 정우리",
-    "이도혜",
-    "김현수",
-    "김진석, 김성욱"
-  ];
+// 4개 조 로테이션 순서 (1주 단위)
+const teams = [
+"윤영주, 정우리", // 0번
+"이도혜",         // 1번
+"김현수",         // 2번
+"김진석, 김성욱"  // 3번
+];
+
+  let shiftOffset = parseInt(localStorage.getItem("recycle_offset") || "0");
 
   function getDutyInfo() {
-    const now = new Date();
-    const baseMon = new Date(2026, 5, 22);
+const now = new Date();
+
+    // 기준점: 6월 22일 월요일 (서인태, 윤영주 조 시작일)
+const baseMon = new Date(2026, 5, 22);
 
     const currentDay = now.getDay();
-    const diffToMon = (currentDay === 0 ? -6 : 1 - currentDay);
+const diffToMon = (currentDay === 0 ? -6 : 1 - currentDay);
 
     const thisMon = new Date(now);
-    thisMon.setDate(now.getDate() + diffToMon);
-    thisMon.setHours(0, 0, 0, 0);
+thisMon.setDate(now.getDate() + diffToMon);
+thisMon.setHours(0,0,0,0);
 
-    const diffWeeks = Math.round((thisMon - baseMon) / (1000 * 60 * 60 * 24 * 7));
+    // 몇 주 차이인지 계산
+const diffWeeks = Math.round((thisMon - baseMon) / (1000 * 60 * 60 * 24 * 7));
 
-    let thisWeekIndex = diffWeeks % 4;
-    if (thisWeekIndex < 0) thisWeekIndex += 4;
+    // 이번 주, 다음 주, 다다음 주 조 계산
+let thisWeekIndex = (diffWeeks + shiftOffset) % 4;
+if (thisWeekIndex < 0) thisWeekIndex += 4;
 
-    const nextWeekIndex = (thisWeekIndex + 1) % 4;
-    const afterNextWeekIndex = (thisWeekIndex + 2) % 4;
+    let nextWeekIndex = (thisWeekIndex + 1) % 4;
+let afterNextWeekIndex = (thisWeekIndex + 2) % 4;
 
-    document.getElementById("currentTeam").textContent = teams[thisWeekIndex];
-    document.getElementById("nextTeam").textContent = teams[nextWeekIndex];
-    document.getElementById("afterNextTeam").textContent = teams[afterNextWeekIndex];
+    // 화면 업데이트
+document.getElementById("currentTeam").textContent = teams[thisWeekIndex];
+document.getElementById("nextTeam").textContent = teams[nextWeekIndex];
+document.getElementById("afterNextTeam").textContent = teams[afterNextWeekIndex];
 
     if (currentDay === 1) {
-      document.getElementById("currentDutyTitle").textContent = "오늘(월요일) 분리수거 당번";
-    } else if (currentDay === 4) {
-      document.getElementById("currentDutyTitle").textContent = "오늘(목요일) 분리수거 당번";
-    } else {
-      document.getElementById("currentDutyTitle").textContent = "이번 주 담당 조 (월/목 전담)";
-    }
-  }
+document.getElementById("currentDutyTitle").textContent = "오늘(월요일) 분리수거 당번";
+} else if (currentDay === 4) {
+document.getElementById("currentDutyTitle").textContent = "오늘(목요일) 분리수거 당번";
+} else {
+document.getElementById("currentDutyTitle").textContent = "이번 주 담당 조 (월/목 전담)";
+}
+}
+
+  function nextShift() {
+if (confirm("순번을 다음 조로 1주 밀어내겠습니까?")) {
+shiftOffset = (shiftOffset + 1) % 4;
+localStorage.setItem("recycle_offset", shiftOffset);
+getDutyInfo();
+}
+}
 
   getDutyInfo();
 </script>
